@@ -1,0 +1,39 @@
+MIT License
+
+Copyright (c) 2026 dd-voice contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----------------------------------------------------------------------------
+
+附加法律声明（本声明的效力优先于上文对使用场景的默示许可）
+
+1. 本项目通过逆向某包网页前端私有协议实现语音转写，与字节跳动、
+   某包、OpenAI 无任何隶属、授权或关联关系，并非其官方产品或 SDK。
+
+2. 本项目仅供个人学习、技术研究与协议分析之用。使用者应确保其使用行为
+   符合所在国家/地区的法律法规及第三方服务条款。
+
+3. 某包网页协议为私有实现，可能随时变更或下线，当前实现不保证长期可用。
+
+4. 使用本软件的一切风险由使用者自行承担。因使用本软件导致的任何后果
+   （包括但不限于服务受限、隐私泄露、违约或行政处罚），作者及贡献者
+   不承担任何责任。
+
+5. 将本软件用于商业或对外服务前，使用者须自行获得相关权利方的合法授权。

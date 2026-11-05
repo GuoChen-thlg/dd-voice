@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# uv / 虚拟环境
+.venv/
+.env/
+
+# 构建产物
+dist/
+build/
+*.spec
+
+# 测试 / 运行产物
+.pytest_cache/
+*.log
+.runtime/
+
+# 系统
+.DS_Store

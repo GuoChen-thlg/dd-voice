@@ -1,0 +1,59 @@
+name: 打包发布
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: dd-voice-linux-x86_64
+          - os: macos-latest
+            artifact: dd-voice-macos-x86_64
+          - os: macos-14
+            artifact: dd-voice-macos-aarch64
+          - os: windows-latest
+            artifact: dd-voice-windows-x86_64.exe
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v5
+      - name: 同步依赖
+        run: uv sync
+      - name: 定位 FFmpeg 二进制
+        shell: bash
+        run: |
+          echo "FFMPEG_EXE=$(uv run python -c 'import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())')" >> "$GITHUB_ENV"
+      - name: 打包（macOS / Linux）
+        if: runner.os != 'Windows'
+        run: |
+          uv run pyinstaller --onefile --name dd-voice \
+            --add-binary "$FFMPEG_EXE:imageio_ffmpeg/binaries" \
+            --hidden-import uvicorn.logging --hidden-import uvicorn.loops.auto \
+            --hidden-import uvicorn.protocols.http.auto --hidden-import uvicorn.protocols.websockets.auto \
+            --hidden-import uvicorn.lifespan.on --hidden-import anyio._backends._asyncio \
+            -F src/ddvoice/server.py
+          mv dist/dd-voice dist/${{ matrix.artifact }}
+      - name: 打包（Windows）
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          uv run pyinstaller --onefile --name dd-voice \
+            --add-binary "$FFMPEG_EXE;imageio_ffmpeg/binaries" \
+            --hidden-import uvicorn.logging --hidden-import uvicorn.loops.auto \
+            --hidden-import uvicorn.protocols.http.auto --hidden-import uvicorn.protocols.websockets.auto \
+            --hidden-import uvicorn.lifespan.on --hidden-import anyio._backends._asyncio \
+            -F src/ddvoice/server.py
+          mv dist/dd-voice.exe "dist/${{ matrix.artifact }}"
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
