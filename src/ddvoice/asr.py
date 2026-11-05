@@ -33,22 +33,43 @@ class Transcription:
     elapsed: float
 
 
-def bootstrap_guest(timeout=15):
+def bootstrap_guest(timeout=60):
     """使用全新内存 CookieJar 做游客初始化，不读取任何浏览器配置。"""
+    # 强制不走系统代理，避免本机代理把某包首页请求劫持/拖慢导致转写失败。
+    proxy_handler = urllib.request.ProxyHandler({})
     opener = urllib.request.build_opener(
-        urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        proxy_handler, urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
     request = urllib.request.Request(HOMEPAGE, headers={
         'User-Agent': USER_AGENT, 'Accept-Language': 'zh-CN,zh;q=0.9'})
+    marker_re = re.compile(r'window\._ROUTER_DATA\s*=\s*')
     try:
         with opener.open(request, timeout=timeout) as response:
-            data = response.read(10 * 1024 * 1024 + 1)
-        if len(data) > 10 * 1024 * 1024:
+            chunks = []
+            total = 0
+            cap = 10 * 1024 * 1024 + 1
+            router = None
+            # 分块读取：先找到游客数据标记，再继续读到能完整解析出 JSON 为止，
+            # 避免标记所在 chunk 之后 JSON 值被截断导致解析失败。
+            while total < cap:
+                chunk = response.read(1 << 16)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                total += len(chunk)
+                html = b''.join(chunks).decode('utf-8', errors='replace')
+                marker = marker_re.search(html)
+                if marker:
+                    try:
+                        router, _ = json.JSONDecoder().raw_decode(
+                            html[marker.end():])
+                        break
+                    except ValueError:
+                        continue
+            data = b''.join(chunks)
+        if total > 10 * 1024 * 1024:
             raise ASRError('某包首页响应过大')
-        html = data.decode('utf-8')
-        marker = re.search(r'window\._ROUTER_DATA\s*=\s*', html)
-        if not marker:
+        if router is None:
             raise ASRError('首页缺少游客初始化数据，网页结构可能已改变')
-        router, _ = json.JSONDecoder().raw_decode(html[marker.end():])
         layout = router['loaderData']['chat_layout']['chat_layout']
         device_id = str(layout['launchCore']['web_id'])
         if not device_id.isascii() or not device_id.isdigit() or int(device_id) <= 0:
@@ -106,7 +127,9 @@ def transcribe_pcm(pcm, *, duration=None, timeout=15, on_event=None):
     except ImportError as error:
         raise ASRError('请先安装 websocket-client 依赖') from error
     started = time.monotonic()
-    context = bootstrap_guest(timeout)
+    # 首页拉取使用独立的较大超时：某包首页服务器限速，完整读取约需 20s，
+    # 不能复用 ws 会话的 timeout（默认仅 15s），否则会提前被掐断导致转写失败。
+    context = bootstrap_guest(max(timeout, 60))
     try:
         ws = websocket.create_connection(
             GATEWAY + '?' + urlencode(context), origin='https://www.doubao.com',

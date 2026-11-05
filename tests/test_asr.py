@@ -38,7 +38,9 @@ class BootstrapGuestTest(unittest.TestCase):
     @mock.patch('ddvoice.asr.urllib.request.build_opener')
     def test_首页缺少路由数据报错(self, mock_build):
         mock_opener = mock.MagicMock()
-        mock_opener.open.return_value.__enter__.return_value.read.return_value = b'no router data'
+        mock_response = mock_opener.open.return_value.__enter__.return_value
+        # 首次返回不含路由数据的片段，随后 EOF，模拟完整的首页响应。
+        mock_response.read.side_effect = [b'no router data', b'']
         mock_build.return_value = mock_opener
         with self.assertRaises(ASRError):
             asr.bootstrap_guest(timeout=5)
